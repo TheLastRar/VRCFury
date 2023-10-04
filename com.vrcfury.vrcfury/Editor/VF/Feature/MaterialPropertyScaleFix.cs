@@ -1,20 +1,25 @@
-using System;
+//using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using VF.Builder;
 using VF.Feature.Base;
+using VF.Injector;
 using VF.Inspector;
 using VF.Model.Feature;
+using VF.Service;
 using VF.Utils;
 
 namespace VF.Feature {
     //TODO: Make TpsScaleFixBuider a wrapper around this
-    public class MaterialPropertyScaleFix : FeatureBuilder<MaterialPropertyScaleFix> {
+    public class MaterialPropertyScaleFixBuilder : FeatureBuilder<MaterialPropertyScaleFix> {
+        [VFAutowired] private readonly ScalePropertyCompensationService scaleCompensationService;
+
         public override string GetEditorTitle() {
             return "Material Property Scaling Fix";
         }
@@ -34,8 +39,7 @@ namespace VF.Feature {
                 }
             };
 
-            var col = new VisualElement
-            {
+            var col = new VisualElement {
                 style =
                 {
                     flexDirection = FlexDirection.Column,
@@ -67,12 +71,10 @@ namespace VF.Feature {
                     marginLeft = 2,
                     marginRight = 2,
                     flexGrow = 1,
-                    flexBasis = 100,
+                    flexBasis = 120,
                     unityTextAlign = TextAnchor.MiddleRight
                 }
             });
-            
-            var propField = VRCFuryEditorUtils.Prop(rendererProp);
 
             var propField4 = VRCFuryEditorUtils.RefreshOnChange(() => {
                 propField.SetEnabled(!affectAllMeshesProp.boolValue);
@@ -99,8 +101,7 @@ namespace VF.Feature {
             propField2.tooltip = "Property Name";
             materialRow.Add(propField2);
 
-            var searchButton = new Button(() => SearchClick(renderer))
-            {
+            var searchButton = new Button(SearchClick) {
                 text = "Search",
                 style =
                 {
@@ -120,12 +121,12 @@ namespace VF.Feature {
             //TODO, make regular functions
             //Can we just pass object? or would the button need refressing if we do?
             void SearchClick() {
-                var targetWidth = row.GetFirstAncestorOfType<UnityEditor.UIElements.InspectorElement>().worldBound
+                var targetWidth = content.GetFirstAncestorOfType<UnityEditor.UIElements.InspectorElement>().worldBound
                     .width;
                 var searchContext = new UnityEditor.Experimental.GraphView.SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition), targetWidth, 300);
                 var provider = ScriptableObject.CreateInstance<VRCFurySearchWindowProvider>();
                 provider.InitProvider(GetTreeEntries, (entry, userData) => {
-                    propertyNameProp.stringValue = (string) entry.userData;
+                    propertyNameProp.stringValue = (string)entry.userData;
                     prop.serializedObject.ApplyModifiedProperties();
                     return true;
                 });
@@ -146,7 +147,7 @@ namespace VF.Feature {
                 }
 
                 if (renderers.Count == 0) return entries;
-                
+
                 var singleRenderer = renderers.Count == 1;
                 foreach (var renderer in renderers) {
                     if (renderer == null) continue;
@@ -159,31 +160,30 @@ namespace VF.Feature {
                     }
                     foreach (var material in sharedMaterials) {
                         if (material == null) continue;
-                        
+
                         nest = singleRenderer ? 1 : 2;
                         if (!singleMaterial) {
-                            entries.Add(new UnityEditor.Experimental.GraphView.SearchTreeGroupEntry(new GUIContent("Material: " + material.name),  nest));
+                            entries.Add(new UnityEditor.Experimental.GraphView.SearchTreeGroupEntry(new GUIContent("Material: " + material.name), nest));
                             nest++;
                         }
                         var shader = material.shader;
-                        
+
                         if (shader == null) continue;
-                        
+
                         var count = ShaderUtil.GetPropertyCount(shader);
-                        var materialProperties = MaterialEditor.GetMaterialProperties(new Object[]{ material });
-                        for (var i = 0; i < count; i++)
-                        {
+                        var materialProperties = MaterialEditor.GetMaterialProperties(new Object[] { material });
+                        for (var i = 0; i < count; i++) {
                             var propertyName = ShaderUtil.GetPropertyName(shader, i);
                             var readableName = ShaderUtil.GetPropertyDescription(shader, i);
                             var matProp = System.Array.Find(materialProperties, p => p.name == propertyName);
                             if ((matProp.flags & MaterialProperty.PropFlags.HideInInspector) != 0) continue;
-                                        
+
                             var propType = ShaderUtil.GetPropertyType(shader, i);
-                            
+
                             if (propType != ShaderUtil.ShaderPropertyType.Float &&
                                 propType != ShaderUtil.ShaderPropertyType.Range &&
                                 propType != ShaderUtil.ShaderPropertyType.Vector) continue;
-                            
+
                             var prioritizePropName = readableName.Length > 25f;
                             var entryName = prioritizePropName ? propertyName : readableName;
                             if (!singleRenderer) {
@@ -194,13 +194,12 @@ namespace VF.Feature {
                             }
 
                             entryName += prioritizePropName ? $" ({readableName})" : $" ({propertyName})";
-                            entries.Add(new UnityEditor.Experimental.GraphView.SearchTreeEntry(new GUIContent(entryName))
-                            {
+                            entries.Add(new UnityEditor.Experimental.GraphView.SearchTreeEntry(new GUIContent(entryName)) {
                                 level = nest,
                                 userData = propertyName
                             });
                         }
-                    }    
+                    }
                 }
                 return entries;
             }
@@ -210,12 +209,16 @@ namespace VF.Feature {
             return false;
         }
 
+        string GetPath(VFGameObject obj) {
+            return avatarObject == null ? obj.name : obj.GetPath(avatarObject);
+        }
+
         [FeatureBuilderAction(FeatureOrder.TpsScaleFix)]
         public void Apply() {
             if (model.renderer == null && !model.affectAllMeshes) return;
             var renderers = new[] { model.renderer };
-            if (materialPropertyAction.affectAllMeshes) {
-                renderers = avatarObject.GetComponentsInSelfAndChildren<SkinnedMeshRenderers>();
+            if (model.affectAllMeshes) {
+                renderers = avatarObject.GetComponentsInSelfAndChildren<SkinnedMeshRenderer>();
             }
 
             foreach (var renderer in renderers) {
@@ -235,7 +238,7 @@ namespace VF.Feature {
             foreach (var mat in materials) {
                 void Add(string propName, float val) {
                     if (scaledProps.TryGetValue(propName, out var oldVal) && val != oldVal) {
-                        throw new Exception(
+                        throw new System.Exception(
                             "This renderer contains multiple materials with different scale values");
                     }
                     scaledProps[propName] = val;
@@ -254,19 +257,19 @@ namespace VF.Feature {
                     Add(propName, val);
                 }
 
-                var shader = material.shader;    
+                var shader = mat.shader;
                 if (shader == null) continue;
 
                 int i = shader.FindPropertyIndex(propertyName);
-                if (i = -1) continue;
+                if (i == -1) continue;
 
                 var propType = shader.GetPropertyType(i);
-                
-                if (propType == Rendering.ShaderPropertyType.Float |
-                    propType == Rendering.ShaderPropertyType.Range) {
+
+                if (propType == ShaderPropertyType.Float |
+                    propType == ShaderPropertyType.Range) {
                     AddFloat(propertyName);
-                } else if (propType == Rendering.ShaderPropertyType.Vector) {
-                    AddVector(propertyName)
+                } else if (propType == ShaderPropertyType.Vector) {
+                    AddVector(propertyName);
                 }
             }
             return scaledProps;
