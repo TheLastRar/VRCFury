@@ -723,4 +723,11 @@ namespace VF.Model.Feature {
         public bool enableLightlessToggle2 = false;
     }
 
+    [Serializable]
+    public class MaterialPropertyScaleFix : NewFeatureModel {
+        public SkinnedMeshRenderer renderer;
+        public bool affectAllMeshes;
+        public string propertyName;
+    }
+
 }
