@@ -24,7 +24,7 @@ void sps_light_parse(float range, half4 color, out int type) {
 	}
 
 	if (secondDecimal == 1) type = SPS_TYPE_HOLE;
-	if (secondDecimal == 2) type = SPS_TYPE_RING_TWOWAY;
+	if (secondDecimal == 2) type = SPS_TYPE_RING_ONEWAY;
 	if (secondDecimal == 5) type = SPS_TYPE_FRONT;
 }
 
