@@ -51,7 +51,7 @@ void sps_apply_real(inout float3 vertex, inout float3 normal, uint vertexId, ino
 			applyLerp = min(applyLerp, 1-entranceAngleTooSharp);
 		}
 
-		if (type == SPS_TYPE_HOLE) {
+		if (type == SPS_TYPE_HOLE || type == SPS_TYPE_RING_ONEWAY) {
 			// Uncancel if hilted in a hole
 			const float hiltedSphereRadius = 0.3;
 			const float inSphere = orfDistance > worldLength*hiltedSphereRadius ? 0 : 1;
