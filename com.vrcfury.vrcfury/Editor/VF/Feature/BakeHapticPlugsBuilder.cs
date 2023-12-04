@@ -71,6 +71,7 @@ namespace VF.Feature {
 
             AnimationClip tipLightOnClip = null;
             AnimationClip spsPlusClip = null;
+            AnimationClip legacyRingOneWay = null;
 
             foreach (var plug in avatarObject.GetComponentsInSelfAndChildren<VRCFuryHapticPlug>()) {
                 try {
@@ -131,6 +132,28 @@ namespace VF.Feature {
                                 configureMaterial = r.configureMaterial,
                                 spsBlendshapes = r.spsBlendshapes
                             });
+                        }
+
+                        if (legacyRingOneWay == null) {
+                            var param = fx.NewBool("LegacyRingsOneWay", synced: true, saved: true);
+                            manager.GetMenu()
+                                .NewMenuToggle(
+                                    $"{spsOptions.GetOptionsPath()}/<b>Legacy Rings OneWay<\\/b>\n<size=20>Treat DPS or TPS rings as oneway",
+                                    param);
+                            legacyRingOneWay = fx.NewClip("LegacyRingsOneWay");
+                            var layer = fx.NewLayer("LegacyRingsOneWay");
+                            var off = layer.NewState("Off");
+                            var on = layer.NewState("On").WithAnimation(legacyRingOneWay);
+                            var whenOn = param.IsTrue();
+                            off.TransitionsTo(on).When(whenOn);
+                            on.TransitionsTo(off).When(whenOn.Not());
+                        }
+
+                        foreach (var r in renderers) {
+                            legacyRingOneWay.SetCurve(
+                                EditorCurveBinding.FloatCurve(r.renderer.owner().GetPath(avatarObject), typeof(SkinnedMeshRenderer), "material._SPS_LegacyRingOneWay"),
+                                1
+                            );
                         }
                     }
 
