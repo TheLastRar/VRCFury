@@ -2,6 +2,7 @@ Shader "Hidden/VRCFury/SpsResolver" {
     Properties {
         [Header(Flags)]
         [Toggle] _SPS_Legacy("Allow Legacy Lights", Float) = 1
+        [Toggle] _SPS_LegacyRingOneWay("Legacy Rings One-Way", Float) = 0
         _SPS_Enabled("Apply Fraction", Float) = 1
 
         [Header(Tags)]
