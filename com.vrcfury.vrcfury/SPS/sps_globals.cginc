@@ -47,6 +47,7 @@ float _SPS_BlendshapeCount;
 
 float _SPS_Enabled;
 float _SPS_Overrun;
+float _SPS_LegacyRingOneWay;
 float _SPS_Target_LL_Lights;
 
 #endif

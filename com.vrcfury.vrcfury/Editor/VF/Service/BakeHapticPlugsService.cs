@@ -74,6 +74,7 @@ namespace VF.Service {
         public void Apply() {
             AnimationClip tipLightOnClip = null;
             AnimationClip enableSpsPlugClip = null;
+            AnimationClip legacyRingOneWay = null;
 
             var plugs = avatarObject.GetComponentsInSelfAndChildren<VRCFuryHapticPlug>();
 
@@ -91,17 +92,32 @@ namespace VF.Service {
                 on.TransitionsTo(off).When(whenOn.Not());
             }
 
+            if (plugs.Any(plug => plug.enableSps)) {
+                var param = fx.NewBool("LegacyRingsOneWay", synced: true, saved: true);
+                menu.NewMenuToggle(
+						$"{spsOptions.GetOptionsPath()}/<b>Legacy Rings OneWay<\\/b>\n<size=20>Treat DPS or TPS rings as oneway",
+						param);
+                legacyRingOneWay = clipFactory.NewClip("LegacyRingsOneWay");
+                var layer = fx.NewLayer("LegacyRingsOneWay");
+                var off = layer.NewState("Off");
+                var on = layer.NewState("On").WithAnimation(legacyRingOneWay);
+                var whenOn = param.IsTrue();
+                off.TransitionsTo(on).When(whenOn);
+                on.TransitionsTo(off).When(whenOn.Not());
+            }
+
+
             foreach (var plug in plugs) {
                 try {
                     if (!bakeResults.TryGetValue(plug, out var bakeInfo)) continue;
-                    ApplyPlug(plug, bakeInfo, ref enableSpsPlugClip, tipLightOnClip);
+                    ApplyPlug(plug, bakeInfo, ref enableSpsPlugClip, tipLightOnClip, legacyRingOneWay);
                 } catch (Exception e) {
                     throw new ExceptionWithCause($"Failed to bake SPS Plug: {plug.owner().GetPath(avatarObject)}", e);
                 }
             }
         }
         
-        private void ApplyPlug(VRCFuryHapticPlug plug, VRCFuryHapticPlugEditor.BakeResult bakeInfo, ref AnimationClip enableSpsPlugClip, AnimationClip tipLightOnClip) {
+        private void ApplyPlug(VRCFuryHapticPlug plug, VRCFuryHapticPlugEditor.BakeResult bakeInfo, ref AnimationClip enableSpsPlugClip, AnimationClip tipLightOnClip, AnimationClip legacyRingOneWay) {
             var bakeRoot = bakeInfo.bakeRoot;
             var worldSpace = bakeInfo.worldSpace;
             var renderers = bakeInfo.renderers;
@@ -223,6 +239,16 @@ namespace VF.Service {
                         configureMaterial = r.configureMaterial,
                         spsBlendshapes = r.spsBlendshapes
                     });
+                }
+
+                if (legacyRingOneWay != null) {
+                    foreach (var r in renderers) {
+                        legacyRingOneWay.SetCurve(
+                            r.renderer,
+                            "material._SPS_LegacyRingOneWay",
+                            1
+                        );
+                    }
                 }
 
                 {
