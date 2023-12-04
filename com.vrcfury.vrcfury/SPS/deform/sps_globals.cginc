@@ -13,6 +13,7 @@ float _SPS_BakedRadius;
 float _SPS_OthersChannelTagCount;
 float _SPS_OthersLegacyTags;
 float _SPS_UseLegacyLights;
+float _SPS_LegacyRingOneWay;
 
 UNITY_INSTANCING_BUFFER_START(SpsDeformProps)
     UNITY_DEFINE_INSTANCED_PROP(float, _SPS_Enabled)

@@ -28,6 +28,7 @@
 [HideInInspector] _SPS_OthersChannelTagCount("Others channel tag count", Float) = 0
 [HideInInspector] _SPS_OthersLegacyTags("Others includes legacy tags", Float) = 0
 [HideInInspector] _SPS_UseLegacyLights("Accept legacy lights", Float) = 1
+[HideInInspector] _SPS_LegacyRingOneWay("Legacy Rings One-Way", Float) = 0
 [HideInInspector] _SPS_Bake("Baked data", 2D) = "white" {}
 [HideInInspector] _SPS_DisableShadows("Disable shadows", Float) = 0
 [HideInInspector] _SPS_DisableDepth("Disable depth pass", Float) = 0

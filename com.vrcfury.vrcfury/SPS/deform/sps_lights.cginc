@@ -40,7 +40,7 @@ SpsSocketCandidate sps_read_light(uint index, float3 plugWorld, float3 plugUp) {
     socket.world = sps_light_world(index);
     socket.normal = sps_normalize(plugWorld - socket.world);
     socket.up = plugUp;
-    socket.control = kind == 1 ? SPS_SOCKET_FLAG_HOLE : SPS_SOCKET_FLAG_DOUBLE_SIDED;
+    socket.control = kind == 1 ? SPS_SOCKET_FLAG_HOLE : (sps_to_bool(_SPS_LegacyRingOneWay) ? 0 : SPS_SOCKET_FLAG_DOUBLE_SIDED);
     socket.control |= SPS_SOCKET_VALID;
     float nearest = SPS_LEGACY_FRONT_DISTANCE_MAX * SPS_LEGACY_FRONT_DISTANCE_MAX;
     [fastopt]

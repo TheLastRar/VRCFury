@@ -82,11 +82,12 @@ namespace VF.Service {
             var plugs = avatarObject.GetComponentsInSelfAndChildren<VRCFuryHapticPlug>();
             var options = spsOptions.GetOptions();
             var addDpsTipLight = options.legacySocketCompatibility && options.addDpsTipLight;
+            var legacyRingsOneWay = options.legacySocketCompatibility; // Always enabled with legacy toggle
 
             foreach (var plug in plugs) {
                 try {
                     if (!bakeResults.TryGetValue(plug, out var bakeInfo)) continue;
-                    ApplyPlug(plug, bakeInfo, addDpsTipLight, usedNames);
+                    ApplyPlug(plug, bakeInfo, addDpsTipLight, legacyRingsOneWay, usedNames);
                 } catch (Exception e) {
                     throw new ExceptionWithCause($"Failed to build SPS Plug: {plug.owner().GetPath(avatarObject)}", e);
                 }
@@ -97,6 +98,7 @@ namespace VF.Service {
             VRCFuryHapticPlug plug,
             VRCFuryHapticPlugEditor.BakeResult bakeInfo,
             bool addDpsTipLight,
+            bool legacyRingsOneWay,
             ISet<string> usedNames
         ) {
             var name = HapticUtils.MakeUniqueOgbId(usedNames, bakeInfo.oscId);
@@ -210,6 +212,17 @@ namespace VF.Service {
                         new[] { ((UnityEngine.Component)light, "m_Intensity", localLength) });
                     spsOptions.RegisterLegacyObject(tip);
                     foreach (var set in publicSets) set.Register(tip);
+                });
+            }
+
+            // DPS One-way rings
+            if (legacyRingsOneWay) {
+                bakeInfo.channelContacts.OnAllSetsAvailable(sets => {
+                    var publicSets = sets.Where(s => s.isPublic).ToArray();
+                    if (publicSets.Length == 0) return;
+                    foreach (var r in renderers) {
+                        spsOptions.GetLegacyOnClip().SetCurve(r.renderer, "material._SPS_LegacyRingOneWay", 1);
+                    }
                 });
             }
 
