@@ -4,6 +4,7 @@ _SPS_BakedLength("World length of mesh when baked (m)", Float) = 0
 _SPS_Bake("Baked mesh info", 2D) = "white" {}
 _SPS_Enabled("Enabled (0-1)", Float) = 1
 _SPS_Overrun("Overrun", Float) = 1
+_SPS_LegacyRingOneWay("Treat legacy rings as oneway", Float) = 0
 _SPS_BlendshapeVertCount("Baked blendshape vert count", Float) = 0
 _SPS_BlendshapeCount("Blendshape Count", Float) = 0
 _SPS_Blendshape0("Blendshape 0", Float) = 0
