@@ -90,6 +90,7 @@ namespace VF.Service {
         [FeatureBuilderAction]
         public void Apply() {
             VFClip tipLightOnClip = null;
+            VFClip legacyRingOneWayClip = null;
             var usedNames = new HashSet<string>();
 
             var plugs = avatarObject.GetComponentsInSelfAndChildren<VRCFuryHapticPlug>();
@@ -120,6 +121,19 @@ namespace VF.Service {
                 disableRealtimeShadowsClip = clipFactory.NewClip("SPS Disable Realtime Shadows");
                 directTree = directTreeService.Create("SPS Disable Realtime Shadows");
                 directTree.Add(BlendtreeMath.GreaterThan(disableRealtimeShadows.AsFloat(), 0).create(disableRealtimeShadowsClip, null));
+
+                var legacyRingsOneWay = fx.NewBool(
+                    "LegacyRingsOneWay",
+                    synced: true,
+                    saved: true
+                );
+                menu.NewMenuToggle(
+                    $"{spsOptions.GetOptionsPath()}/<b>Legacy Rings One-Way<\\/b>\n<size=20>Treat old rings as one-way",
+                    legacyRingsOneWay
+                );
+                legacyRingOneWayClip = clipFactory.NewClip("SPS Legacy Rings One Way");
+                directTree = directTreeService.Create("SPS Legacy Rings One Way");
+                directTree.Add(BlendtreeMath.GreaterThan(legacyRingsOneWay.AsFloat(), 0).create(legacyRingOneWayClip, null));
             }
 
             if (plugs.Any(plug => plug.addDpsTipLight)) {
@@ -139,7 +153,7 @@ namespace VF.Service {
             foreach (var plug in plugs) {
                 try {
                     if (!bakeResults.TryGetValue(plug, out var bakeInfo)) continue;
-                    ApplyPlug(plug, bakeInfo, tipLightOnClip, disableDepthClip, disableRealtimeShadowsClip, usedNames);
+                    ApplyPlug(plug, bakeInfo, tipLightOnClip, legacyRingOneWayClip, disableDepthClip, disableRealtimeShadowsClip, usedNames);
                 } catch (Exception e) {
                     throw new ExceptionWithCause($"Failed to build SPS Plug: {plug.owner().GetPath(avatarObject)}", e);
                 }
@@ -150,6 +164,7 @@ namespace VF.Service {
             VRCFuryHapticPlug plug,
             VRCFuryHapticPlugEditor.BakeResult bakeInfo,
             VFClip tipLightOnClip,
+            VFClip legacyRingOneWayClip,
             VFClip disableDepthClip,
             VFClip disableRealtimeShadowsClip,
             ISet<string> usedNames
@@ -296,6 +311,14 @@ namespace VF.Service {
                 if (bakeInfo.resolverRenderer != null) {
                     RegisterMaterialProperties(bakeInfo.resolverMaterialProperties);
                     spsPlayerIdService.Register(bakeInfo.resolverRenderer);
+                }
+
+                if (legacyRingOneWayClip != null) {
+                    legacyRingOneWayClip.SetCurve(
+                        bakeInfo.resolverRenderer,
+                        "material._SPS_LegacyRingOneWay",
+                        1
+                    );
                 }
             }
             
