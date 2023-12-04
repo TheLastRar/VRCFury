@@ -7,11 +7,13 @@
 UNITY_INSTANCING_BUFFER_START(SpsResolverProps)
     UNITY_DEFINE_INSTANCED_PROP(float, _SPS_Enabled)
     UNITY_DEFINE_INSTANCED_PROP(float, _SPS_Legacy)
+    UNITY_DEFINE_INSTANCED_PROP(float, _SPS_LegacyRingOneWay)
 UNITY_INSTANCING_BUFFER_END(SpsResolverProps)
 
 #define SPS_RESOLVER_PROP(name) UNITY_ACCESS_INSTANCED_PROP(SpsResolverProps, name)
 #define _SPS_Enabled SPS_RESOLVER_PROP(_SPS_Enabled)
 #define _SPS_Legacy SPS_RESOLVER_PROP(_SPS_Legacy)
+#define _SPS_LegacyRingOneWay SPS_RESOLVER_PROP(_SPS_LegacyRingOneWay)
 
 #ifndef SPS_RESOLVER_DEBUG
     #define SPS_RESOLVER_DEBUG 1

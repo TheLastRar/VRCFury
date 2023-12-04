@@ -88,7 +88,7 @@ SocketData sps_read_legacy_socket(int cellIndex) {
     SocketData data = sps_make_empty_socket();
     uint type = sps_light_type((int)(((uint)(-1 - cellIndex)) >> 2));
     if (type == SPS_LEGACY_LIGHT_HOLE) data.flags = SPS_SOCKET_FLAG_HOLE;
-    else if (type == SPS_LEGACY_LIGHT_RING) data.flags = SPS_SOCKET_FLAG_DOUBLE_SIDED;
+    else if (type == SPS_LEGACY_LIGHT_RING && (_SPS_LegacyRingOneWay < 0.5)) data.flags = SPS_SOCKET_FLAG_DOUBLE_SIDED;
     return data;
 }
 

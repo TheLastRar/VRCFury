@@ -165,7 +165,7 @@ int sps_build_chain(
             if (candidate.cellIndex < 0) {
                 uint type = sps_light_type((int)(((uint)(-1 - candidate.cellIndex)) >> 2));
                 if (type == SPS_LEGACY_LIGHT_HOLE) candidateSocketFlags = SPS_SOCKET_FLAG_HOLE;
-                else if (type == SPS_LEGACY_LIGHT_RING) candidateSocketFlags = SPS_SOCKET_FLAG_DOUBLE_SIDED;
+                else if (type == SPS_LEGACY_LIGHT_RING && (_SPS_LegacyRingOneWay < 0.5)) candidateSocketFlags = SPS_SOCKET_FLAG_DOUBLE_SIDED;
             } else {
                 SpsCell candidateCell = sps_get_cell(socketTex, (uint)candidate.cellIndex);
                 candidateSocketFlags = candidateCell.read_uint(sps_cell_pixel_index_from_payload_index(SPS_SOCKET_PAYLOAD_FLAGS));
