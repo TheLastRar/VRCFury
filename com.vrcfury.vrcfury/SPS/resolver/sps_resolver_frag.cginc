@@ -110,6 +110,53 @@ bool sps_resolver_payload_rgba(SpsTexture socketTex, v2f input, uint payloadInde
         ? socket.up * sps_resolver_radius()
         : 0;
     if (fieldIndex < 3) {
+        // Align to axis of one-way rings if hilted.
+        if (!sps_has_flag(socketData.flags, SPS_SOCKET_FLAG_HOLE) &&
+            !sps_has_flag(socketData.flags, SPS_SOCKET_FLAG_DOUBLE_SIDED))
+        {
+            // Geomatry shader is unable to pass modified socket position without exceeding output size limits.
+            // Instead, modify the socket position for here.
+
+            // Fetch data
+            const float worldLength = sps_resolver_length();
+            const float3 normal = socket.normal;
+            // TODO: Guided rings can produce sharp bends when shifted
+            // May want to skip ring if next ring approaches min-distance
+            // Or maybe we need to snap to curve instead of shifting?
+            //float3 previousWorld = chainSlotIndex > 0 ? sps_read_cell(socketTex, chainSlotIndex - 1).world : sps_object_origin_world();
+            float3 previousWorld = sps_object_origin_world();
+
+            // Prevent orifice from getting too close to plug as that can introduce excessive roll.
+            const float minDistance = worldLength * 0.2;
+            const float lerpDistance = minDistance;
+
+            // Calculate lerp/min distance based on target centre (candidate.world - previousWorld), matching HOLE logic.
+            // Consider plane aligned to orifice
+            float3 rootPos = socket.world - previousWorld;
+            const float orfPerpDistance = dot(-normal, rootPos);
+            float shiftLerp = (orfPerpDistance > minDistance) ? 0 : 1;
+
+            const float shiftAmount = (minDistance - orfPerpDistance);
+            const float3 shiftedRoot = rootPos - normal * shiftAmount;
+
+            /*
+            // Lerp out as ring extends away from plug
+            // https://stackoverflow.com/a/52471226
+            const float orfPlaneDistance = length(shiftedRoot + normal * dot(shiftedRoot, -normal) / dot(normal, normal));
+            shiftLerp *= sps_saturated_map(orfPlaneDistance, minDistance + lerpDistance, minDistance);
+            */
+
+            rootPos = lerp(rootPos, shiftedRoot, shiftLerp);
+            socket.world = rootPos + previousWorld;
+
+            // Don't need to update these
+            /*
+            const float3 position = sps_resolver_socket_target_world(socket, socketData.flags);
+            const float3 entryOffset = position - previousWorld;
+            socket.distanceSq = sps_length_sq(entryOffset);
+            */
+        }
+
         float3 sampleWorld = sps_resolver_socket_target_world(socket, socketData.flags);
         rgba = sps_encode_float(sps_resolver_vector_component(sampleWorld, (int)fieldIndex));
         return true;
