@@ -41,7 +41,7 @@ bool sps_resolver_check_socket(
 
     float worldLength = sps_resolver_length();
     bool isHilted = false;
-    if (allowHilt && sps_has_flag(socketFlags, SPS_SOCKET_FLAG_HOLE)) {
+    if (allowHilt && !sps_has_flag(socketFlags, SPS_SOCKET_FLAG_DOUBLE_SIDED)) {
         float hiltDistance = worldLength * 0.5;
         float rootDistanceSq = sps_length_sq(candidate.world - previousWorld);
         isHilted = rootDistanceSq <= hiltDistance * hiltDistance;
