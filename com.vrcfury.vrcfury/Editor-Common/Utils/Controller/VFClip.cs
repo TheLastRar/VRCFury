@@ -100,6 +100,30 @@ namespace VF.Utils.Controller {
             return output;
         }
 
+        internal void ReloadBindings(VFLoadContext context) {
+            var ncurves = new Dictionary<VFBinding, FloatOrObjectCurve>();
+
+            foreach (var binding in curves) {
+                // Don't need to reload resolved bindings
+                if (binding.Key.IsResolved) {
+                    ncurves.Add(binding.Key, binding.Value);
+                    continue;
+                }
+
+                var resolvedObject = VFResolvedObject.Load(binding.Key.GetStoredPath(), context, binding.Key.type);
+                if (!resolvedObject.HasValue) {
+                    ncurves.Add(binding.Key, binding.Value);
+                    continue;
+                }
+
+                // ToEditorCurveBinding(null) returns rawBinding with an empty path
+                var nbinding = VFBinding.From(resolvedObject.Value, binding.Key.ToEditorCurveBinding(null));
+
+                ncurves.Add(nbinding, binding.Value);
+            }
+            curves = ncurves;
+        }
+
         internal static IEnumerable<(EditorCurveBinding binding, FloatOrObjectCurve curve)> GetRawCurves(AnimationClip clip) {
             return AnimationUtility.GetObjectReferenceCurveBindings(clip)
                 .Select(binding => (binding, (FloatOrObjectCurve)AnimationUtility.GetObjectReferenceCurve(clip, binding)))

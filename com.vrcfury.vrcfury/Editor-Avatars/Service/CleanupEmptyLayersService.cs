@@ -31,6 +31,8 @@ namespace VF.Service {
             foreach (var c in controllers.GetAllUsedControllers()) {
                 var removedBindings = new List<string>();
 
+                c.ReloadBindings(); 
+
                 // Delete bindings targeting things that don't exist
                 foreach (var clip in c.GetClips()) {
                     if (clip.GetUseOriginalUserClip(avatarObject) != null) {
