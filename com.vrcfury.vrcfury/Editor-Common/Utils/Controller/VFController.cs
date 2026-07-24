@@ -16,6 +16,8 @@ namespace VF.Utils.Controller {
         private readonly Dictionary<string, VFAParam> parametersByName = new Dictionary<string, VFAParam>();
         private List<VFLayer> _layers;
 
+        private VFLoadContext context;
+
         public static VFController Create(string name = null) {
             return new VFController {
                 _name = name ?? "New Animator Controller",
@@ -28,6 +30,7 @@ namespace VF.Utils.Controller {
             AnimatorController ctrl,
             VFLoadContext context
         ) : this() {
+            this.context = context;
             InitFromRaw(ctrl, context);
         }
 
@@ -39,6 +42,7 @@ namespace VF.Utils.Controller {
             SetParameters(source.parameters.Select(p => p.Clone(this)));
             var context = new VFCloneContext();
             _layers = source._layers.Select(layer => layer?.Clone(this, context)).ToList();
+            this.context = source.context;
         }
 
         private void InitFromRaw(AnimatorController ctrl, VFLoadContext context) {
@@ -488,6 +492,18 @@ namespace VF.Utils.Controller {
 
         public virtual VFController Clone() {
             return new VFController(this);
+        }
+
+        // Resolves unresolved objects
+        public void ReloadBindings() {
+            if (context == null)
+                return;
+
+            context.ObjectPaths.Capture();
+
+            foreach (var clips in GetClips()) {
+                clips.ReloadBindings(context);
+            }
         }
 
         private IEnumerable<VFMotion> GetMotions(IEnumerable<VFLayer> layerList = null) {
