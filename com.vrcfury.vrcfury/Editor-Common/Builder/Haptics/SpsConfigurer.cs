@@ -385,18 +385,33 @@ namespace VF.Builder.Haptics {
                     return Mathf.Abs(Vector3.Dot(offset, forward));
                 })
                 .ThenBy(other => other.owner().GetPath(root))
-                .Take(2)
                 .ToList();
 
-            if (hipSockets.Count != 2) return null;
+            if (hipSockets.Count < 2) return null;
 
             hipSockets = hipSockets
                 .OrderBy(other => Vector3.Dot(other.owner().worldPosition - hips.worldPosition, forward))
                 .ThenBy(other => other.owner().GetPath(root))
+                .Where(vrcFuryHapticSocket => !EditorOnlyUtils.IsInsideEditorOnly(vrcFuryHapticSocket.owner()))
                 .ToList();
-
-            if (hipSockets[0] == socket) return "hipsback";
-            if (hipSockets[1] == socket) return "hipsfront";
+            
+            Vector3 lastSocketPosition = Vector3.zero;
+            int currentNameIndex = 0;
+            string[] socketNamesInOrder = { "hipsback", "hipsfront" };
+            bool isFirstSocket = true;
+            foreach (var vrcFuryHapticSocket in hipSockets) {
+                if (!isFirstSocket && vrcFuryHapticSocket.owner().worldPosition != lastSocketPosition) {
+                    currentNameIndex++;
+                    if (currentNameIndex >= socketNamesInOrder.Length) return null;
+                }
+                
+                //Debug.Log($"name: {vrcFuryHapticSocket.name}, tag: {socketNamesInOrder[currentNameIndex]}");
+                if (vrcFuryHapticSocket == socket) return socketNamesInOrder[currentNameIndex];
+                
+                lastSocketPosition = vrcFuryHapticSocket.owner().worldPosition;
+                isFirstSocket = false;
+            }
+            
             return null;
         }
 
