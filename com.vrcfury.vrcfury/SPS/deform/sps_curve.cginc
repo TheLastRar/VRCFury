@@ -104,6 +104,9 @@ inline void sps_deform_walk_chain(
     float3 originalStartForward = outForward;
     uint previousFlags = 0u;
 
+    float3 plugForward = startForward;
+    float3 plugUp = outUp;
+    
     [fastopt]
     for (uint sampleIndex = 1; sampleIndex <= SPS_CHAIN_SOCKETS_MAX; sampleIndex++) {
         // Keep the root-to-entrance Bezier, using the advanced entrance as its target.
@@ -156,6 +159,8 @@ inline void sps_deform_walk_chain(
                 p3,
                 remainingDistance,
                 currentUp,
+                plugForward,
+                plugUp,
                 nextRemainingDistance,
                 outPosition,
                 outForward,
