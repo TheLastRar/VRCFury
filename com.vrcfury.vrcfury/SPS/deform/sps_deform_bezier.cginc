@@ -19,6 +19,21 @@ float3 sps_bezierDerivative(float3 p0, float3 p1, float3 p2, float3 p3, float t)
 		+ 3 * t * t * (p3 - p2);
 }
 
+float3 sps_dps_normal(float3 plugForward, float3 plugUp, float3 forward, float3 lastUp)
+{
+	// Normal calculation taken from DPS (bezierDerivitive == forwar).
+	// Constant directions replaced with plug forward/up.
+	// SPS allows greater movement behind the plug.
+	// Need to better handle inverting, SPS can overpower even 2x bezierUpness.
+	// Might be good enough for face up spooning.
+	
+	float bezierUpness = dot(forward, plugUp);
+	float3 bezierUp = lerp(plugUp, -plugForward, saturate(2 * bezierUpness));
+	float bezierDownness = dot(forward, -plugUp);
+	bezierUp = normalize(lerp(bezierUp, plugForward, saturate(2 * bezierDownness)));
+	return sps_nearest_normal(forward, bezierUp);
+}
+
 // https://gamedev.stackexchange.com/questions/105230/points-evenly-spaced-along-a-bezier-curve
 // https://gamedev.stackexchange.com/questions/5373/moving-ships-between-two-planets-along-a-bezier-missing-some-equations-for-acce/5427#5427
 // https://www.geometrictools.com/Documentation/MovingAlongCurveSpecifiedSpeed.pdf
@@ -27,6 +42,8 @@ inline void sps_bezierSolve(
 	float3 p0, float3 p1, float3 p2, float3 p3,
 	float lookingForLength,
 	float3 initialUp,
+	float3 plugForward,
+	float3 plugUp,
 	out float remainingLength,
 	out float3 position,
 	out float3 forward,
@@ -41,7 +58,7 @@ inline void sps_bezierSolve(
 		remainingLength = 0;
 		position = p0;
 		forward = sps_normalize(sps_bezierDerivative(p0, p1, p2, p3, 0));
-		up = sps_nearest_normal(forward, initialUp);
+		up = sps_dps_normal(plugForward, plugUp, forward, initialUp);
 		return;
 	}
 
@@ -56,7 +73,7 @@ inline void sps_bezierSolve(
 		const float t = float(i) / SPS_BEZIER_SAMPLES;
 		const float3 currentPoint = sps_bezier(p0, p1, p2, p3, t);
 		const float3 currentForward = sps_normalize(sps_bezierDerivative(p0, p1, p2, p3, t));
-		const float3 currentUp = sps_nearest_normal(currentForward, lastUp);
+		const float3 currentUp = sps_dps_normal(plugForward, plugUp, currentForward, lastUp);
 		totalLength += length(currentPoint - lastPoint);
 		if (lookingForLength <= totalLength)
 		{
@@ -66,7 +83,7 @@ inline void sps_bezierSolve(
 			remainingLength = 0;
 			position = sps_bezier(p0, p1, p2, p3, adjustedT);
 			forward = sps_normalize(sps_bezierDerivative(p0, p1, p2, p3, adjustedT));
-			up = sps_nearest_normal(forward, approximateUp);
+			up = sps_dps_normal(plugForward, plugUp, forward, approximateUp);
 			return;
 		}
 
@@ -79,5 +96,5 @@ inline void sps_bezierSolve(
 	remainingLength = max(lookingForLength - totalLength, 0);
 	position = p3;
 	forward = sps_normalize(sps_bezierDerivative(p0, p1, p2, p3, 1));
-	up = sps_nearest_normal(forward, lastUp);
+	up = sps_dps_normal(plugForward, plugUp, forward, lastUp);
 }
