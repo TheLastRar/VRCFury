@@ -127,7 +127,7 @@ bool sps_resolver_payload_rgba(SpsTexture socketTex, v2f input, uint payloadInde
             float3 previousWorld = sps_object_origin_world();
 
             // Prevent orifice from getting too close to plug as that can introduce excessive roll.
-            const float minDistance = worldLength * 0.2;
+            const float minDistance = 0;
             const float lerpDistance = minDistance;
 
             // Calculate lerp/min distance based on target centre (candidate.world - previousWorld), matching HOLE logic.
