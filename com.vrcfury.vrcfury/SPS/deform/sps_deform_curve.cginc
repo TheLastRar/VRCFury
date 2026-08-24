@@ -63,6 +63,9 @@ inline void sps_deform_walk_chain(
     float3 currentUp = outUp;
     uint previousFlags = 0u;
 
+    float3 plugForward = startForward;
+    float3 plugUp = outUp;
+    
     [loop]
     for (uint sampleIndex = 1; sampleIndex <= SPS_CHAIN_MAX_SOCKETS; sampleIndex++) {
         float3 endPoint = sps_read_resolver_chain_world(resolverCell, sampleIndex);
@@ -120,6 +123,8 @@ inline void sps_deform_walk_chain(
             p0, p1, p2, p3,
             remainingDistance,
             currentUp,
+            plugForward,
+            plugUp,
             nextRemainingDistance,
             samplePosition,
             sampleForward,
