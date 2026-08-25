@@ -406,7 +406,7 @@ namespace VF.Builder.Haptics {
                 }
                 
                 //Debug.Log($"name: {vrcFuryHapticSocket.name}, tag: {socketNamesInOrder[currentNameIndex]}");
-                if (vrcFuryHapticSocket == socket) return socketNamesInOrder[currentNameIndex];
+                if (vrcFuryHapticSocket.gameObject == socket.gameObject) return socketNamesInOrder[currentNameIndex];
                 
                 lastSocketPosition = vrcFuryHapticSocket.owner().worldPosition;
                 isFirstSocket = false;
