@@ -28,9 +28,9 @@ float3 sps_dps_normal(float3 plugForward, float3 plugUp, float3 forward, float3 
 	// Might be good enough for face up spooning.
 	
 	float bezierUpness = dot(forward, plugUp);
-	float3 bezierUp = lerp(plugUp, -plugForward, saturate(2 * bezierUpness));
+	float3 bezierUp = lerp(plugUp, -plugForward, saturate(1.4 * bezierUpness));
 	float bezierDownness = dot(forward, -plugUp);
-	bezierUp = normalize(lerp(bezierUp, plugForward, saturate(2 * bezierDownness)));
+	bezierUp = normalize(lerp(bezierUp, plugForward, saturate(1.4 * bezierDownness)));
 	return sps_nearest_normal(forward, bezierUp);
 }
 
